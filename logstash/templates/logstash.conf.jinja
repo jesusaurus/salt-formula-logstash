@@ -1,0 +1,214 @@
+input {
+  tcp {
+    type => "tcp-plain"
+    host => "0.0.0.0"
+    port => "5959"
+  }
+
+  udp {
+    type => "udp-plain"
+    host => "0.0.0.0"
+    port => "5959"
+  }
+
+  tcp {
+    type => "tcp-json"
+    host => "0.0.0.0"
+    port => "5960"
+    format => 'json_event'
+  }
+
+  udp {
+    type => "udp-json"
+    host => "0.0.0.0"
+    port => "5960"
+    format => 'json_event'
+  }
+}
+
+
+filter {
+
+  {% set tags = pillar['logstash'].get('tags', []) %}
+  {% if tags is defined %}
+  mutate {
+    'add_tag' => ['{{ tags | join("', '") }}']
+  }
+  {% endif %}
+
+  # Syslog Filters
+  grok {
+    'patterns_dir' => '/etc/logstash/patterns'
+    'pattern' => ['%{RSYSLOGWMS}', '%{RSYSLOGWMSDD}']
+    'type' => 'syslog'
+  }
+
+  date {
+    'exclude_tags' => ['_grokparsefailure']
+    'match' => ['syslog_timestamp', 'ISO8601', 'YYYY-MM-DD\'T\'HH:mm:ss.SSSSSSZZ']
+    'type' => 'syslog'
+  }
+
+  mutate {
+    'exclude_tags' => ['_grokparsefailure']
+    'remove' => ['syslog_hostname', 'syslog_message']
+    'replace' => ['@message', '%{syslog_message}']
+    'type' => 'syslog'
+  }
+
+  # Salt Filters
+  multiline {
+    'type' => 'salt'
+    'pattern' => '^\d\d\d\d\-\d\d\-\d\d.*'
+    'negate' => true
+    'what' => 'previous'
+  }
+
+  grok {
+    'type' => 'salt'
+    'patterns_dir' => '/etc/logstash/patterns'
+    'pattern' => '%{SALT}'
+  }
+
+  date {
+    'type' => 'salt'
+    'exclude_tags' => ['_grokparsefailure']
+    'match' => ['salt_timestamp', 'YYYY-MM-dd HH:mm:ss,SSS']
+    #                              2013-10-01 10:39:17,582
+  }
+
+  mutate {
+    'type' => 'salt'
+    'exclude_tags' => ['_grokparsefailure']
+    'remove' => ['message']
+    'replace' => ['@message', '%{message}']
+  }
+
+  # Chef-Client Filters
+  multiline {
+    'patterns_dir' => '/etc/logstash/patterns'
+    'negate' => true
+    'pattern' => '^\['
+    'type' => 'chef-client'
+    'what' => 'previous'
+  }
+
+  grok {
+    'patterns_dir' => '/etc/logstash/patterns'
+    'pattern' => '%{CHEF_CLIENT}'
+    'type' => 'chef-client'
+  }
+
+  date {
+    'exclude_tags' => ['_grokparsefailure']
+    'match' => ['chef_timestamp', 'ISO8601']
+    'type' => 'chef-client'
+  }
+
+  mutate {
+    'exclude_tags' => ['_grokparsefailure']
+    'remove' => ['message']
+    'replace' => ['@message', '%{message}']
+    'type' => 'chef-client'
+  }
+
+  # Designate Filters
+  mutate {
+    'remove' => ['extra']
+    'type' => 'designate'
+  }
+
+  anonymize {
+    'algorithm' => 'SHA1'
+    'fields' => ['auth_token']
+    'key' => '{{ salt['pillar.get']('logstash:anonymize_key', 'SuperSecret') }}'
+    'type' => 'designate'
+  }
+
+  # RabbitMQ Filters
+  multiline {
+    'patterns_dir' => '/etc/logstash/patterns'
+    'negate' => true
+    'pattern' => '^=\w+\sREPORT'
+    'type' => 'rabbitmq'
+    'what' => 'previous'
+  }
+
+  mutate {
+    'exclude_tags' => ['_grokparsefailure']
+    'gsub' => ['@message', ' ===\n', ' === ']
+    'type' => 'rabbitmq'
+  }
+
+  grok {
+    'patterns_dir' => '/etc/logstash/patterns'
+    'pattern' => '%{RABBITMQ}'
+    'type' => 'rabbitmq'
+  }
+
+  date {
+    'exclude_tags' => ['_grokparsefailure']
+    'match' => ['rabbitmq_timestamp', 'dd-MMM-YYYY::HH:mm:ss']
+    'type' => 'rabbitmq'
+  }
+
+  mutate {
+    'exclude_tags' => ['_grokparsefailure']
+    'remove' => ['message', 'month', 'day', 'year', 'time']
+    'replace' => ['@message', '%{message}']
+    'type' => 'rabbitmq'
+  }
+
+  # Nginx Filters
+  grok {
+    'patterns_dir' => '/etc/logstash/patterns'
+    'pattern' => '%{NGINXACCESS}'
+    'type' => 'nginx'
+  }
+
+  grep {
+    'drop' => true
+    'exclude_tags' => ['_grokparsefailure']
+    'match' => ['rawrequest', '^-$']
+    'negate' => true
+    'type' => 'nginx'
+  }
+
+  date {
+    'add_field' => ['recieved_at', '%{@timestamp}']
+    'exclude_tags' => ['_grokparsefailure']
+    'match' => ['nginx_timestamp', 'dd/MMM/YYYY:HH:mm:ss Z']
+    'type' => 'nginx'
+  }
+
+
+  # Common Post Filters
+  grep {
+    'drop' => true
+    'match' => ['@message', '^$']
+    'negate' => true
+  }
+}
+
+output {
+{% if salt['pillar.get']('logstash:redis_enabled', False) %}
+  redis {
+    'data_type' => 'list'
+    'host' => '{{ salt['pillar.get']('logstash:redis_host', '127.0.0.1') }}'
+    'key' => '{{ salt['pillar.get']('logstash:redis_key', 'logstash') }}'
+    'password' => '{{ salt['pillar.get']('logstash:redis_password', '') }}'
+    'port' => '{{ salt['pillar.get']('logstash:redis_port', '6379') }}'
+  }
+{% endif %}
+
+  file {
+    path => '/var/log/logstash/logstash.out'
+  }
+
+{% if salt['pillar.get']('logstash:elasticsearch_http', False) %}
+  elasticsearch_http {
+    'host' => '{{ salt['pillar.get']('logstash:elasticsearch_host', '127.0.0.1') }}'
+  }
+{% endif %}
+
+}

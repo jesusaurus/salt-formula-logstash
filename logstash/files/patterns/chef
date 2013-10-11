@@ -1,0 +1,1 @@
+CHEF_CLIENT (?m)\[%{TIMESTAMP_ISO8601:chef_timestamp}\] %{LOGLEVEL:levelname}: %{GREEDYDATA:message}

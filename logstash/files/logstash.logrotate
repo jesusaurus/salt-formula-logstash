@@ -1,0 +1,17 @@
+/var/log/logstash/*.log {
+        daily
+        rotate 14
+        delaycompress
+        compress
+        missingok
+        copytruncate
+}
+
+/var/log/logstash/*.out {
+        daily
+        rotate 2
+        delaycompress
+        compress
+        missingok
+        copytruncate
+}
