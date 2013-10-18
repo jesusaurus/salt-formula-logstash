@@ -18,5 +18,5 @@ setgid adm
 console log
 
 script
-  exec java -jar /opt/logstash/logstash.jar agent -f /etc/logstash/logstash.conf --log /var/log/logstash/logstash.log
+  exec java -jar /opt/logstash/logstash.jar agent -f /etc/logstash/conf.d --log /var/log/logstash/logstash.log
 end script

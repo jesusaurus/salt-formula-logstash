@@ -6,6 +6,7 @@ logstash:
   tags:
     - abc
     - 123
+  ssl_enabled: true
   ssl_key: |
     -----BEGIN RSA PRIVATE KEY-----
     MIIEpQIBAAKCAQEA5Qcla2DXrKejcjZJb+CjooKKJa+vDseeb0wQFPWYC4L9SzjL

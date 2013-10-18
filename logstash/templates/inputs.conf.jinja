@@ -3,25 +3,14 @@ input {
     type => "tcp-plain"
     host => "0.0.0.0"
     port => "5959"
-  }
-
-  udp {
-    type => "udp-plain"
-    host => "0.0.0.0"
-    port => "5959"
-  }
-
-  tcp {
-    type => "tcp-json"
-    host => "0.0.0.0"
-    port => "5960"
-    format => 'json_event'
-  }
-
-  udp {
-    type => "udp-json"
-    host => "0.0.0.0"
-    port => "5960"
-    format => 'json_event'
+{% set ssl_enabled = salt['pillar.get']('logstash:ssl_enabled', False) %}
+{%- if ssl_enabled %}
+    ssl_enable => true
+    codec =>   oldlogstashjson { }
+    ssl_verify => false
+    ssl_cacert => '/etc/logstash/hpcs_ca.pem'
+    ssl_cert => '/etc/logstash/logstash.crt'
+    ssl_key => '/etc/logstash/logstash.key'
+{%- endif %}
   }
 }

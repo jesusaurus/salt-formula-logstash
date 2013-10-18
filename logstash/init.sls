@@ -32,6 +32,15 @@ logstash-jre:
     - require:
       - file: /etc/logstash
 
+/etc/logstash/conf.d:
+  file:
+    - recurse
+    - user: root
+    - group: root
+    - source: salt://logstash/files/conf.d
+    - require:
+      - file: /etc/logstash
+
 /var/log/logstash:
   file:
     - directory
@@ -49,16 +58,38 @@ logstash-jre:
     - require:
       - user: logstash
 
-/etc/logstash/logstash.conf:
+/etc/logstash/conf.d/inputs.conf:
   file:
     - managed
     - template: jinja
     - user: root
     - group: root
     - mode: 644
-    - source: salt://logstash/templates/logstash.conf.jinja
+    - source: salt://logstash/templates/inputs.conf.jinja
     - require:
-      - file: /etc/logstash
+      - file: /etc/logstash/conf.d
+
+/etc/logstash/conf.d/common.conf:
+  file:
+    - managed
+    - template: jinja
+    - user: root
+    - group: root
+    - mode: 644
+    - source: salt://logstash/templates/common.conf.jinja
+    - require:
+      - file: /etc/logstash/conf.d
+
+/etc/logstash/conf.d/outputs.conf:
+  file:
+    - managed
+    - template: jinja
+    - user: root
+    - group: root
+    - mode: 644
+    - source: salt://logstash/templates/outputs.conf.jinja
+    - require:
+      - file: /etc/logstash/conf.d
 
 /etc/init/logstash.conf:
   file:
@@ -83,7 +114,7 @@ logstash-jre:
 /etc/logstash/logstash.crt:
   file:
     - managed
-    - content_content: logstash:ssl_cert
+    - contents_pillar: logstash:ssl_cert
     - require:
       - file: /opt/logstash
 {% endif %}
@@ -93,11 +124,29 @@ logstash-jre:
 /etc/logstash/logstash.key:
   file:
     - managed
-    - content_content: logstash:ssl_key
+    - contents_pillar: logstash:ssl_key
     - require:
       - file: /opt/logstash
 {% endif %}
 
+# HPCS CA Cert
+/etc/logstash/hpcs_ca.pem:
+  file:
+    - managed
+    - source: salt://logstash/files/hpcs_ca.pem
+    - require:
+      - file: /opt/logstash
+
+#
+# There are 3 supported methods for getting the logstash jar on disk:
+# http:     grab the jar over http, defaults to the public download, override
+#           via the logstash:jar_source & logstash:jar_hash pillar
+#
+# deb/http: pull a .deb over http & install, this will drop the jar on disk
+#
+# deb/http: install a package that will drop the jar on disk, assume the repo
+#           is already configured
+#
 {% set jar_delivery = salt['pillar.get']('logstash:jar_delivery', 'http') %}
 
 {% if jar_delivery == 'http' %}
@@ -138,7 +187,7 @@ logstash:
     - running
     - watch:
       - file: /etc/init/logstash.conf
-      - file: /etc/logstash/logstash.conf
+      - file: /etc/logstash/conf.d
     - require:
       - user: logstash
       - pkg: logstash-jre
