@@ -77,11 +77,29 @@ logstash-jre:
     - managed
     - source: salt://logstash/files/logstash.logrotate
 
+# if we have an SSL cert&key, drop it in place
+{% set ssl_cert = salt['pillar.get']('logstash:ssl_cert', False) %}
+{% if ssl_cert %}
+/etc/logstash/logstash.crt:
+  file:
+    - managed
+    - content_content: logstash:ssl_cert
+    - require:
+      - file: /opt/logstash
+
+/etc/logstash/logstash.key:
+  file:
+    - managed
+    - content_content: logstash:ssl_key
+    - require:
+      - file: /opt/logstash
+{% endif %}
+
 logstash:
   file:
     - managed
-    - source: https://download.elasticsearch.org/logstash/logstash/logstash-1.1.13-flatjar.jar
-    - source_hash: md5=fdb8dc147a4a54622b1212ead926be5b
+    - source: {{ salt['pillar.get']('logstash:jar_source', 'https://download.elasticsearch.org/logstash/logstash/logstash-1.1.13-flatjar.jar') }}
+    - source_hash: {{ salt['pillar.get']('logstash:jar_hash', 'md5=fdb8dc147a4a54622b1212ead926be5b') }}
     - name: /opt/logstash/logstash.jar
     - user: root
     - group: root
