@@ -86,7 +86,10 @@ logstash-jre:
     - content_content: logstash:ssl_cert
     - require:
       - file: /opt/logstash
+{% endif %}
 
+{% set ssl_key = salt['pillar.get']('logstash:ssl_key', False) %}
+{% if ssl_key %}
 /etc/logstash/logstash.key:
   file:
     - managed
@@ -95,17 +98,42 @@ logstash-jre:
       - file: /opt/logstash
 {% endif %}
 
-logstash:
+{% set jar_delivery = salt['pillar.get']('logstash:jar_delivery', 'http') %}
+
+{% if jar_delivery == 'http' %}
+logstash_jar:
   file:
     - managed
-    - source: {{ salt['pillar.get']('logstash:jar_source', 'https://download.elasticsearch.org/logstash/logstash/logstash-1.1.13-flatjar.jar') }}
-    - source_hash: {{ salt['pillar.get']('logstash:jar_hash', 'md5=fdb8dc147a4a54622b1212ead926be5b') }}
+    - source: {{ salt['pillar.get']('logstash:jar_source', 'https://download.elasticsearch.org/logstash/logstash/logstash-1.2.1-flatjar.jar') }}
+    - source_hash: {{ salt['pillar.get']('logstash:jar_hash', 'md5=863272192b52bccf1fc2cf839a888eaf') }}
     - name: /opt/logstash/logstash.jar
     - user: root
     - group: root
     - mode: 664
     - require:
       - file: /opt/logstash
+{% endif %}
+
+{% if jar_delivery == 'deb/http' %}
+# Pull a specific .deb from a location you set in the pillar
+# (we default to a non-existant url, just to break)
+logstash_jar:
+  pkg.installed:
+    - name: logstash
+    - sources:
+      - logstash: {{ salt['pillar.get']('logstash:deb_source', 'https://youforgottosetme/somepath/logstash-1.1.13-flatjar.deb') }}
+    - require:
+      - pkg: logstash-jre
+{% endif %}
+
+{% if jar_delivery == 'deb/apt' %}
+logstash_jar:
+  pkg:
+    - latest
+    - name: logstash
+{% endif %}
+
+logstash:
   service:
     - running
     - watch:
