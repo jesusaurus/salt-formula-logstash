@@ -3,6 +3,9 @@ logstash:
   elasticsearch_host: 192.168.35.31
   jar_source: 'https://download.elasticsearch.org/logstash/logstash/logstash-1.2.1-flatjar.jar'
   jar_hash: 'md5=863272192b52bccf1fc2cf839a888eaf'
+  tags:
+    - abc
+    - 123
   ssl_key: |
     -----BEGIN RSA PRIVATE KEY-----
     MIIEpQIBAAKCAQEA5Qcla2DXrKejcjZJb+CjooKKJa+vDseeb0wQFPWYC4L9SzjL

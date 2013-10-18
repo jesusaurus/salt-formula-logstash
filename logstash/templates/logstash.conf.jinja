@@ -30,7 +30,7 @@ input {
 filter {
 
   {% set tags = pillar['logstash'].get('tags', []) %}
-  {% if tags is defined %}
+  {% if tags is defined and tags|length > 0 %}
   mutate {
     'add_tag' => ['{{ tags | join("', '") }}']
   }
