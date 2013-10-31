@@ -1,12 +1,13 @@
 input {
   tcp {
-    type => "tcp-plain"
     host => "0.0.0.0"
     port => "5959"
 {% set ssl_enabled = salt['pillar.get']('logstash:ssl_enabled', False) %}
+# ssl/tcp required beaver-30.33 & logstash-1.2, so we need to set the codec to json
+# on the logstash-side
 {%- if ssl_enabled %}
     ssl_enable => true
-    codec =>   oldlogstashjson { }
+    codec => json { }
     ssl_verify => false
     ssl_cacert => '/etc/logstash/hpcs_ca.pem'
     ssl_cert => '/etc/logstash/logstash.crt'
