@@ -147,7 +147,14 @@ logstash-jre:
 # deb/http: install a package that will drop the jar on disk, assume the repo
 #           is already configured
 #
-{% set jar_delivery = salt['pillar.get']('logstash:jar_delivery', 'http') %}
+{% set jar_delivery = salt['pillar.get']('logstash:jar_delivery', 'deb/apt') %}
+
+{% if jar_delivery == 'deb/apt' %}
+logstash_jar:
+  pkg:
+    - latest
+    - name: logstash
+{% endif %}
 
 {% if jar_delivery == 'http' %}
 logstash_jar:
@@ -165,21 +172,14 @@ logstash_jar:
 
 {% if jar_delivery == 'deb/http' %}
 # Pull a specific .deb from a location you set in the pillar
-# (we default to a non-existant url, just to break)
+# (we default to keg in uswest)
 logstash_jar:
   pkg.installed:
     - name: logstash
     - sources:
-      - logstash: {{ salt['pillar.get']('logstash:deb_source', 'https://youforgottosetme/somepath/logstash-1.1.13-flatjar.deb') }}
+      - logstash: {{ salt['pillar.get']('logstash:deb_source', 'http://keg.dev.uswest.hpcloud.net/cloud/paas-deploy/developer/pool/release/l/logstash/logstash_1.1.13_all.deb') }}
     - require:
       - pkg: logstash-jre
-{% endif %}
-
-{% if jar_delivery == 'deb/apt' %}
-logstash_jar:
-  pkg:
-    - latest
-    - name: logstash
 {% endif %}
 
 logstash:
@@ -192,7 +192,8 @@ logstash:
       - user: logstash
       - pkg: logstash-jre
       - file: /var/log/logstash
-      - file: /opt/logstash/logstash.jar
+    # can't require logstash_jar as its state may be either file or pkg
+    - order: last
   user:
     - present
     - fullname: Logstash
