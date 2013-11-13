@@ -12,6 +12,50 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
+
+#
+# There are 3 supported methods for getting the logstash jar on disk:
+# deb/apt: install a package that will drop the jar on disk, assume the repo
+#           is already configured
+#
+# http:     grab the jar over http, defaults to the public download, override
+#           via the logstash:jar_source & logstash:jar_hash pillar
+#
+# deb/http: pull a .deb over http & install, this will drop the jar on disk
+#
+{% set jar_delivery = salt['pillar.get']('logstash:jar_delivery', 'deb/apt') %}
+
+{% if jar_delivery == 'deb/apt' %}
+logstash_jar:
+  pkg:
+    - latest
+    - name: logstash
+{% endif %}
+
+{% if jar_delivery == 'http' %}
+logstash_jar:
+  file:
+    - managed
+    - source: {{ salt['pillar.get']('logstash:jar_source', 'https://download.elasticsearch.org/logstash/logstash/logstash-1.2.1-flatjar.jar') }}
+    - source_hash: {{ salt['pillar.get']('logstash:jar_hash', 'md5=863272192b52bccf1fc2cf839a888eaf') }}
+    - name: /opt/logstash/logstash.jar
+    - user: root
+    - group: root
+    - mode: 664
+    - require:
+      - file: /opt/logstash
+{% endif %}
+
+{% if jar_delivery == 'deb/http' %}
+# Pull a specific .deb from a location you set in the pillar
+# (we default to keg in uswest)
+logstash_jar:
+  pkg.installed:
+    - name: logstash
+    - sources:
+      - logstash: {{ salt['pillar.get']('logstash:deb_source', 'http://keg.dev.uswest.hpcloud.net/cloud/paas-deploy/developer/pool/release/l/logstash/logstash_1.2.1_all.deb') }}
+{% endif %}
+
 logstash-jre:
   pkg:
     - installed
@@ -136,51 +180,6 @@ logstash-jre:
     - source: salt://logstash/files/hpcs_ca.pem
     - require:
       - file: /opt/logstash
-
-#
-# There are 3 supported methods for getting the logstash jar on disk:
-# http:     grab the jar over http, defaults to the public download, override
-#           via the logstash:jar_source & logstash:jar_hash pillar
-#
-# deb/http: pull a .deb over http & install, this will drop the jar on disk
-#
-# deb/http: install a package that will drop the jar on disk, assume the repo
-#           is already configured
-#
-{% set jar_delivery = salt['pillar.get']('logstash:jar_delivery', 'deb/apt') %}
-
-{% if jar_delivery == 'deb/apt' %}
-logstash_jar:
-  pkg:
-    - latest
-    - name: logstash
-{% endif %}
-
-{% if jar_delivery == 'http' %}
-logstash_jar:
-  file:
-    - managed
-    - source: {{ salt['pillar.get']('logstash:jar_source', 'https://download.elasticsearch.org/logstash/logstash/logstash-1.2.1-flatjar.jar') }}
-    - source_hash: {{ salt['pillar.get']('logstash:jar_hash', 'md5=863272192b52bccf1fc2cf839a888eaf') }}
-    - name: /opt/logstash/logstash.jar
-    - user: root
-    - group: root
-    - mode: 664
-    - require:
-      - file: /opt/logstash
-{% endif %}
-
-{% if jar_delivery == 'deb/http' %}
-# Pull a specific .deb from a location you set in the pillar
-# (we default to keg in uswest)
-logstash_jar:
-  pkg.installed:
-    - name: logstash
-    - sources:
-      - logstash: {{ salt['pillar.get']('logstash:deb_source', 'http://keg.dev.uswest.hpcloud.net/cloud/paas-deploy/developer/pool/release/l/logstash/logstash_1.1.13_all.deb') }}
-    - require:
-      - pkg: logstash-jre
-{% endif %}
 
 logstash:
   service:
