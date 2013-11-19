@@ -169,6 +169,9 @@ logstash-jre:
   file:
     - managed
     - contents_pillar: logstash:ssl_key
+    - user: logstash
+    - group: adm
+    - mode: 600
     - require:
       - file: /opt/logstash
 {% endif %}
