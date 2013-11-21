@@ -152,13 +152,17 @@ logstash-jre:
     - managed
     - source: salt://logstash/files/logstash.logrotate
 
+# TODO migrate to "- contents_pillar: logstash:ssl_cert" when we upgrade to 0.17
+# In the meantime, use jinja templates that print pillars into the files
+#
 # if we have an SSL cert&key, drop it in place
 {% set ssl_cert = salt['pillar.get']('logstash:ssl_cert', False) %}
 {% if ssl_cert %}
 /etc/logstash/logstash.crt:
   file:
     - managed
-    - contents_pillar: logstash:ssl_cert
+    - template: jinja
+    - source: salt://logstash/templates/logstash.crt.jinja
     - require:
       - file: /opt/logstash
 {% endif %}
@@ -168,7 +172,8 @@ logstash-jre:
 /etc/logstash/logstash.key:
   file:
     - managed
-    - contents_pillar: logstash:ssl_key
+    - template: jinja
+    - source: salt://logstash/templates/logstash.key.jinja
     - user: logstash
     - group: adm
     - mode: 600
