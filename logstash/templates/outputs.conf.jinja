@@ -5,42 +5,43 @@ output {
     path => '/var/log/logstash/logstash.out'
   }
 
-  # should we feed data to elasticsearch via redis?
-  {% if salt['pillar.get']('logstash:redis_enabled', False) %}
-    redis {
-      'data_type' => 'list'
-      'host' => '{{ salt['pillar.get']('logstash:redis_host', '127.0.0.1') }}'
-      'key' => '{{ salt['pillar.get']('logstash:redis_key', 'logstash') }}'
-      'password' => '{{ salt['pillar.get']('logstash:redis_password', '') }}'
-      'port' => '{{ salt['pillar.get']('logstash:redis_port', '6379') }}'
-    }
+  {% if salt['pillar.get']('logstash:redis_enabled', False) -%}
+    # feed data to elasticsearch via redis
+  redis {
+    data_type => 'list'
+    host => '{{ salt['pillar.get']('logstash:redis_host', '127.0.0.1') }}'
+    key => '{{ salt['pillar.get']('logstash:redis_key', 'logstash') }}'
+    password => '{{ salt['pillar.get']('logstash:redis_password', '') }}'
+    port => '{{ salt['pillar.get']('logstash:redis_port', '6379') }}'
+  }
   {% endif %}
 
-  # should we feed data to elasticsearch via http?
-  {% if salt['pillar.get']('logstash:elasticsearch_http', False) %}
-    elasticsearch_http {
-      'host' => '{{ salt['pillar.get']('logstash:elasticsearch_host', '127.0.0.1') }}'
-    }
+  {% if salt['pillar.get']('logstash:elasticsearch_http', False) -%}
+    # feed data to elasticsearch via http
+  elasticsearch_http {
+    host => '{{ salt['pillar.get']('logstash:elasticsearch_host', '127.0.0.1') }}'
+  }
   {% endif %}
 
-  {% if salt['pillar.get']('logstash:rabbitmq', False) %}
-  {% set queue = salt['pillar.get']('logstash:rabbitmq_queue') %}
-    rabbitmq {
-      type => "{{ queue }}"
+  {% if salt['pillar.get']('logstash:rabbitmq', False) -%}
+  {% set queue = salt['pillar.get']('logstash:rabbitmq_queue') -%}
+    # feed data to rabbitmq
+  rabbitmq {
+    type => '{{ queue }}'
 
-      host => "{{ salt['pillar.get']('logstash:rabbit_host') }}"
-      port => 5671
-      ssl => true
-      user => "{{ salt['pillar.get']('logstash:rabbit_user') }}"
-      password => "{{ salt['pillar.get']('logstash:rabbit_pass') }}"
+    host => '{{ salt['pillar.get']('logstash:rabbitmq_host') }}'
+    port => 5671
+    ssl => true
+    user => '{{ salt['pillar.get']('logstash:rabbitmq_user') }}'
+    password => '{{ salt['pillar.get']('logstash:rabbitmq_pass') }}'
 
-      vhost => "/logstash"
-      exchange => "logstash"
-      exchange_type => "direct"
-      persistent => true
-      durable => true
-      key => "{{ queue }}"
-    }
+    vhost => '/logstash'
+    exchange => 'logstash'
+    exchange_type => 'direct'
+    persistent => true
+    durable => true
+    key => '{{ queue }}'
+  }
   {% endif %}
 
 }
