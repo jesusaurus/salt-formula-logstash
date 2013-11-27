@@ -23,4 +23,24 @@ output {
     }
   {% endif %}
 
+  {% if salt['pillar.get']('logstash:rabbitmq', False) %}
+  {% set queue = salt['pillar.get']('logstash:rabbitmq_queue') %}
+    rabbitmq {
+      type => "{{ queue }}"
+
+      host => "{{ salt['pillar.get']('logstash:rabbit_host') }}"
+      port => 5671
+      ssl => true
+      user => "{{ salt['pillar.get']('logstash:rabbit_user') }}"
+      password => "{{ salt['pillar.get']('logstash:rabbit_pass') }}"
+
+      vhost => "/logstash"
+      exchange => "logstash"
+      exchange_type => "direct"
+      persistent => true
+      durable => true
+      key => "{{ queue }}"
+    }
+  {% endif %}
+
 }
