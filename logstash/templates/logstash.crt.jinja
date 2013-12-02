@@ -1,1 +1,2 @@
-{{ pillar['logstash']['ssl_cert'] }}
+{% set ssl_cert = salt['pillar.get']('logstash:ssl_cert', salt['pillar.get']('secrets:logstash:ssl_cert')) -%}
+{{ ssl_cert }}

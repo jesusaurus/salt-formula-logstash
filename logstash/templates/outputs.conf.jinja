@@ -25,6 +25,7 @@ output {
 
   {% if salt['pillar.get']('logstash:rabbitmq', False) -%}
   {% set queue = salt['pillar.get']('logstash:rabbitmq_queue') -%}
+  {% set rabbitmq_pass = salt['pillar.get']('logstash:rabbitmq_pass', salt['pillar.get']('secrets:logstash:rabbitmq_pass')) -%}
     # feed data to rabbitmq
   rabbitmq {
     type => '{{ queue }}'
@@ -33,7 +34,7 @@ output {
     port => 5671
     ssl => true
     user => '{{ salt['pillar.get']('logstash:rabbitmq_user') }}'
-    password => '{{ salt['pillar.get']('logstash:rabbitmq_pass') }}'
+    password => '{{ rabbitmq_pass }}'
 
     vhost => '/logstash'
     exchange => 'logstash'
