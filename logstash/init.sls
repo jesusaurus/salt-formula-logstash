@@ -81,6 +81,7 @@ logstash-jre:
     - recurse
     - user: root
     - group: root
+    - file_mode: 644
     - source: salt://logstash/files/conf.d
     - require:
       - file: /etc/logstash
