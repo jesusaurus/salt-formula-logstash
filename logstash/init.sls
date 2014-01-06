@@ -72,6 +72,7 @@ logstash-jre:
     - recurse
     - user: root
     - group: root
+    - file_mode: 644
     - source: salt://logstash/files/patterns
     - require:
       - file: /etc/logstash
@@ -79,10 +80,11 @@ logstash-jre:
 /etc/logstash/conf.d:
   file:
     - recurse
+    - template: jinja
     - user: root
     - group: root
     - file_mode: 644
-    - source: salt://logstash/files/conf.d
+    - source: salt://logstash/templates/conf.d
     - require:
       - file: /etc/logstash
 
@@ -102,39 +104,6 @@ logstash-jre:
     - group: adm
     - require:
       - user: logstash
-
-/etc/logstash/conf.d/inputs.conf:
-  file:
-    - managed
-    - template: jinja
-    - user: root
-    - group: root
-    - mode: 644
-    - source: salt://logstash/templates/inputs.conf.jinja
-    - require:
-      - file: /etc/logstash/conf.d
-
-/etc/logstash/conf.d/common.conf:
-  file:
-    - managed
-    - template: jinja
-    - user: root
-    - group: root
-    - mode: 644
-    - source: salt://logstash/templates/common.conf.jinja
-    - require:
-      - file: /etc/logstash/conf.d
-
-/etc/logstash/conf.d/outputs.conf:
-  file:
-    - managed
-    - template: jinja
-    - user: root
-    - group: root
-    - mode: 644
-    - source: salt://logstash/templates/outputs.conf.jinja
-    - require:
-      - file: /etc/logstash/conf.d
 
 /etc/init/logstash.conf:
   file:
