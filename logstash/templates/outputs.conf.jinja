@@ -1,9 +1,11 @@
 
 output {
 
+  {% if salt['pillar.get']('logstash:file_enabled', True) -%}
   file {
     path => '/var/log/logstash/logstash.out'
   }
+  {% endif -%}
 
   {% if salt['pillar.get']('logstash:redis_enabled', False) -%}
     # feed data to elasticsearch via redis
