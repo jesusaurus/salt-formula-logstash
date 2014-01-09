@@ -1,2 +1,2 @@
-RABBITMQ (?m)=%{LOGLEVEL:levelname} REPORT==== %{RABBITMQ_TIMESTAMP:rabbitmq_timestamp} === %{GREEDYDATA:message}
-RABBITMQ_TIMESTAMP %{MONTHDAY:day}-%{MONTH:month}-%{YEAR:year}::%{TIME:time}
+RABBITMQ (?m)=%{LOGLEVEL:levelname} REPORT==== %{RABBITMQ_TIMESTAMP:timestamp} === %{GREEDYDATA:message}
+RABBITMQ_TIMESTAMP %{MONTHDAY}-%{MONTH}-%{YEAR}::%{TIME}

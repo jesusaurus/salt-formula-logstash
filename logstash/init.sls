@@ -36,8 +36,8 @@ logstash_jar:
 logstash_jar:
   file:
     - managed
-    - source: {{ salt['pillar.get']('logstash:jar_source', 'https://download.elasticsearch.org/logstash/logstash/logstash-1.2.1-flatjar.jar') }}
-    - source_hash: {{ salt['pillar.get']('logstash:jar_hash', 'md5=863272192b52bccf1fc2cf839a888eaf') }}
+    - source: {{ salt['pillar.get']('logstash:jar_source', 'https://download.elasticsearch.org/logstash/logstash/logstash-1.3.2-flatjar.jar') }}
+    - source_hash: {{ salt['pillar.get']('logstash:jar_hash', 'md5=538caf2e67023d3fac4098d8bbfd3270') }}
     - name: /opt/logstash/logstash.jar
     - user: root
     - group: root
@@ -53,7 +53,7 @@ logstash_jar:
   pkg.installed:
     - name: logstash
     - sources:
-      - logstash: {{ salt['pillar.get']('logstash:deb_source', 'http://keg.dev.uswest.hpcloud.net/cloud/paas-deploy/developer/pool/release/l/logstash/logstash_1.2.1_all.deb') }}
+      - logstash: {{ salt['pillar.get']('logstash:deb_source', 'http://keg.dev.uswest.hpcloud.net/cloud/paas-deploy/developer/pool/release/l/logstash/logstash_1.3.2_all.deb') }}
 {% endif %}
 
 logstash-jre:

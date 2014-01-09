@@ -1,1 +1,1 @@
-SALT (?m)%{TIMESTAMP_ISO8601:salt_timestamp} \[%{DATA:program}\s*\]\[%{LOGLEVEL:levelname}\s*\]\s%{GREEDYDATA:message}
+SALT (?m)%{TIMESTAMP_ISO8601:timestamp} \[%{DATA:logger}\s*\]\[%{LOGLEVEL:levelname}\s*\]\s%{GREEDYDATA:message}

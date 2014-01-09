@@ -1,2 +1,0 @@
-RSYSLOGWMS %{TIMESTAMP_ISO8601:syslog_timestamp} (?:%{SYSLOGFACILITY} )?%{SYSLOGHOST:syslog_hostname} %{SYSLOGPROG}: %{GREEDYDATA:syslog_message}
-RSYSLOGWMSDD %{TIMESTAMP_ISO8601:syslog_timestamp}? (?:%{SYSLOGFACILITY} )?%{SYSLOGHOST:syslog_hostname} %{LOGLEVEL} %{GREEDYDATA:syslog_message}
