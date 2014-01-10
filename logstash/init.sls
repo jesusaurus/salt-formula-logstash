@@ -13,47 +13,13 @@
 #    under the License.
 #
 
-#
-# There are 3 supported methods for getting the logstash jar on disk:
-# deb/apt: install a package that will drop the jar on disk, assume the repo
-#           is already configured
-#
-# http:     grab the jar over http, defaults to the public download, override
-#           via the logstash:jar_source & logstash:jar_hash pillar
-#
-# deb/http: pull a .deb over http & install, this will drop the jar on disk
-#
-{% set jar_delivery = salt['pillar.get']('logstash:jar_delivery', 'deb/apt') %}
-
-{% if jar_delivery == 'deb/apt' %}
 logstash_jar:
   pkg:
-    - latest
+    - installed
     - name: logstash
-{% endif %}
-
-{% if jar_delivery == 'http' %}
-logstash_jar:
-  file:
-    - managed
-    - source: {{ salt['pillar.get']('logstash:jar_source', 'https://download.elasticsearch.org/logstash/logstash/logstash-1.3.2-flatjar.jar') }}
-    - source_hash: {{ salt['pillar.get']('logstash:jar_hash', 'md5=538caf2e67023d3fac4098d8bbfd3270') }}
-    - name: /opt/logstash/logstash.jar
-    - user: root
-    - group: root
-    - mode: 664
-    - require:
-      - file: /opt/logstash
-{% endif %}
-
-{% if jar_delivery == 'deb/http' %}
-# Pull a specific .deb from a location you set in the pillar
-# (we default to keg in uswest)
-logstash_jar:
-  pkg.installed:
-    - name: logstash
-    - sources:
-      - logstash: {{ salt['pillar.get']('logstash:deb_source', 'http://keg.dev.uswest.hpcloud.net/cloud/paas-deploy/developer/pool/release/l/logstash/logstash_1.3.2_all.deb') }}
+{% set logstash_version = salt['pillar.get']('logstash:version', False) -%} 
+{% if logstash_version -%} 
+    - version: {{ logstash_version }}
 {% endif %}
 
 logstash-jre:
@@ -66,6 +32,8 @@ logstash-jre:
     - directory
     - user: root
     - group: root
+    - require:
+      - pkg: logstash_jar
 
 /etc/logstash/patterns:
   file:
@@ -171,9 +139,8 @@ logstash:
     - require:
       - user: logstash
       - pkg: logstash-jre
+      - pkg: logstash_jar
       - file: /var/log/logstash
-    # can't require logstash_jar as its state may be either file or pkg
-    - order: last
   user:
     - present
     - fullname: Logstash
