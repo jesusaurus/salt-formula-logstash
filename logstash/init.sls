@@ -104,6 +104,9 @@ logstash-jre:
     - managed
     - template: jinja
     - source: salt://logstash/templates/logstash.crt.jinja
+    - user: logstash
+    - group: adm
+    - mode: 644
     - require:
       - file: /opt/logstash
 {% endif %}
@@ -127,6 +130,9 @@ logstash-jre:
   file:
     - managed
     - source: salt://logstash/files/hpcs_ca.pem
+    - user: logstash
+    - group: adm
+    - mode: 644
     - require:
       - file: /opt/logstash
 
