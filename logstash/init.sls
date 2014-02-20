@@ -17,8 +17,8 @@ logstash_jar:
   pkg:
     - installed
     - name: logstash
-{% set logstash_version = salt['pillar.get']('logstash:version', False) -%} 
-{% if logstash_version -%} 
+{% set logstash_version = salt['pillar.get']('logstash:version', False) -%}
+{% if logstash_version -%}
     - version: {{ logstash_version }}
 {% endif %}
 
@@ -90,13 +90,29 @@ logstash-jre:
     - managed
     - source: salt://logstash/files/logstash.logrotate
 
-# TODO migrate to "- contents_pillar: logstash:ssl_cert" when we upgrade to 0.17
+# TODO: Migrate to "- contents_pillar: logstash:ssl_cert" when we upgrade to 0.17
 # In the meantime, use jinja templates that print pillars into the files
-#
-# TODO assign logstash:ssl_cert from secrets:logstash:ssl_cert when we upgrade
+
+# TODO: Assign logstash:ssl_cert from secrets:logstash:ssl_cert when we upgrade
 # to 0.17 and can include pillars in pillars or use import_yaml
-#
-# if we have an SSL cert&key, drop it in place
+
+# if we have an SSL CA Cert, Cert and Key drop it in place
+{% set ssl_cacert = salt['pillar.get']('logstash:ssl_cacert', salt['pillar.get']('secrets:logstash:ssl_cacert', False)) %}
+{% if ssl_cacert %}
+/etc/logstash/logstash.ca.crt:
+  file:
+    - managed
+    - template: jinja
+    - source: salt://logstash/templates/logstash.ca.crt.jinja
+    - user: logstash
+    - group: adm
+    - mode: 644
+    - require:
+      - file: /etc/logstash
+    - watch_in:
+      - service: logstash
+{% endif %}
+
 {% set ssl_cert = salt['pillar.get']('logstash:ssl_cert', salt['pillar.get']('secrets:logstash:ssl_cert', False)) %}
 {% if ssl_cert %}
 /etc/logstash/logstash.crt:
@@ -108,7 +124,9 @@ logstash-jre:
     - group: adm
     - mode: 644
     - require:
-      - file: /opt/logstash
+      - file: /etc/logstash
+    - watch_in:
+      - service: logstash
 {% endif %}
 
 {% set ssl_key = salt['pillar.get']('logstash:ssl_key', salt['pillar.get']('secrets:logstash:ssl_key', False)) %}
@@ -122,19 +140,10 @@ logstash-jre:
     - group: adm
     - mode: 600
     - require:
-      - file: /opt/logstash
+      - file: /etc/logstash
+    - watch_in:
+      - service: logstash
 {% endif %}
-
-# HPCS CA Cert
-/etc/logstash/hpcs_ca.pem:
-  file:
-    - managed
-    - source: salt://logstash/files/hpcs_ca.pem
-    - user: logstash
-    - group: adm
-    - mode: 644
-    - require:
-      - file: /opt/logstash
 
 logstash:
   service:
