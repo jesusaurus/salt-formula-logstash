@@ -1,0 +1,36 @@
+---
+driver:
+  name: vagrant
+
+provisioner:
+  name: salt_solo
+  formula: logstash
+  state_top:
+    base:
+      '*':
+        - logstash
+        - logstash.repo
+
+  pillars:
+    top.sls:
+      base:
+        '*':
+          - logstash
+
+    logstash.sls:
+      tags:
+        - testing
+
+platforms:
+  - name: ubuntu-12.04
+
+suites:
+  - name: default
+
+  - name: default_0175
+    provisioner:
+      salt_version: 0.17.5
+
+  - name: default_0162
+    provisioner:
+      salt_version: 0.16.2
